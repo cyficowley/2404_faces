@@ -1,18 +1,17 @@
 import speech_recognition as sr
 
-r = sr.Recognizer()
-mic = sr.Microphone()
+class InterpretAudio:
+  def __init__(self):
+    self.r = sr.Recognizer()
+    self.mic = sr.Microphone()
+    self.r.adjust_for_ambient_noise(source)
 
-with mic as source:
-  print("about to adjust")
-  r.adjust_for_ambient_noise(source)
-  print("adjusted to noise")
-  audio = r.listen(source)
-  
-  print("sending to google")
-  try:
-    print("you said {}".format(r.recognize_google(audio)))
-  except:
-    print("it tried and fail to recognize")
-
+  def listen_for_response(self):
+    with self.mic as source:
+      audio = self.r.listen(source)
+      try:
+        return self.r.recognize_google(audio))
+      except:
+        print("failed to recognize speech")
+        return None
 
