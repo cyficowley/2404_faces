@@ -1,6 +1,4 @@
 from os import system
-# system('say hello world)
-# system('say -v Alex hello world)
 
 class Text2Speech:
 
