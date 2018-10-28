@@ -10,7 +10,7 @@ class InterpretAudio:
     with self.mic as source:
       audio = self.r.listen(source)
       try:
-        return self.r.recognize_google(audio))
+        return self.r.recognize_google(audio)
       except:
         print("failed to recognize speech")
         return None

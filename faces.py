@@ -2,13 +2,20 @@ import face_recognition
 import cv2
 import os
 import operator
-
+from text2speech import Text2Speech
+import audio
 # Get a reference to webcam #0 (the default one)
+
+wait_loops = 60
+
 
 class faces:
 
   def __init__(self):
     self.people = {}
+    self.speech = Text2Speech()
+
+    self.seen_people = {}
 
     for root, dirs, files in os.walk("faces"):
       for person in dirs:
@@ -37,9 +44,14 @@ class faces:
     frames_new_face = 0
 
     while True:
+
+      for name in self.seen_people.keys():
+        self.seen_people[name] -= 1
+    
       ret, frame = video_capture.read()
 
       # Resize frame of video to 1/4 size for faster face recognition processing
+
       small_frame = cv2.resize(frame, (0, 0), fx=0.25, fy=0.25)
 
       # Convert the image from BGR color (which OpenCV uses) to RGB color (which face_recognition uses)
@@ -74,8 +86,12 @@ class faces:
               self._add_new_face("surya", frame)
           
       
-      if(face_locations):
-        print(all_matches)
+      if(face_locations is not None):
+        for each in all_matches:
+          if(each not in self.seen_people):
+            self.speech.say("Good to see you {}".format(each))
+          self.seen_people[each] = wait_loops
+
 
     # Release handle to the webcam
     video_capture.release()
