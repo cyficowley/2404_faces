@@ -34,6 +34,8 @@ class faces:
   def main_loop(self):
     video_capture = cv2.VideoCapture(0)
 
+    frames_new_face = 0
+
     while True:
       ret, frame = video_capture.read()
 
@@ -61,10 +63,15 @@ class faces:
 
         max_person = max(totals.items(), key=operator.itemgetter(1))
         if(max_person[1] != 0):
+          frames_new_face = 0
           all_matches.append(max_person[0])
         else:
-          if(len(face_encodings) == 1):
-            self._add_new_face("surya", frame)
+          frames_new_face += 1
+          # Has to see 3 frames of new person in a row to try to add them
+          if(frames_new_face == 3):
+            frames_new_face = 0
+            if(len(face_encodings) == 1):
+              self._add_new_face("surya", frame)
           
       
       if(face_locations):
