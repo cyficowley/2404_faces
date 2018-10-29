@@ -2,8 +2,10 @@ import face_recognition
 import cv2
 import os
 import operator
+import time
+import enchant
 from text2speech import Text2Speech
-import audio
+from audio import InterpretAudio
 # Get a reference to webcam #0 (the default one)
 
 wait_loops = 60
@@ -12,6 +14,7 @@ wait_loops = 60
 class faces:
 
   def __init__(self):
+    self.dictionary = enchant.Dict("en_US")
     self.people = {}
     self.speech = Text2Speech()
 
@@ -45,8 +48,14 @@ class faces:
 
     while True:
 
+      names_to_remove = []
       for name in self.seen_people.keys():
         self.seen_people[name] -= 1
+        if(self.seen_people[name] < 0):
+          names_to_remove.append(name)
+
+      for each in names_to_remove:
+          del self.seen_people[name]      
     
       ret, frame = video_capture.read()
 
@@ -81,9 +90,16 @@ class faces:
           frames_new_face += 1
           # Has to see 3 frames of new person in a row to try to add them
           if(frames_new_face == 3):
-            frames_new_face = 0
             if(len(face_encodings) == 1):
-              self._add_new_face("surya", frame)
+              frames_new_face = 0
+              self.speech.say("Please say your first name after the reeee")
+              self.audio_input = InterpretAudio()
+              self.speech.say("reeee")
+              response = self.audio_input.listen_for_response()
+              print(response)
+              name = self._return_name(response)
+              print(name)
+              self._add_new_face(name, frame)
           
       
       if(face_locations is not None):
@@ -97,6 +113,24 @@ class faces:
     video_capture.release()
     cv2.destroyAllWindows()
 
+
+  def _return_name(self, text):
+    words = text.split(" ")
+    if(len(words) == 1):
+      return words[0]
+    non_words = []
+    for each in words:
+      if(not self.dictionary.check(each)):
+        non_words.append(each)
+    if(len(non_words) == 1):
+      return non_words[0]
+    
+    words.reverse()
+
+    for each in words:
+      if(each.lower() != each):
+        return each
+    return words[0]
 
 
   def _add_new_face(self, name, face_image):
