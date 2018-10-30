@@ -96,10 +96,9 @@ class faces:
               self.audio_input = InterpretAudio()
               self.speech.say("reeee")
               response = self.audio_input.listen_for_response()
-              print(response)
               name = self._return_name(response)
-              print(name)
-              self._add_new_face(name, frame)
+              if(len(name) != 0):
+                self._add_new_face(name, frame)
           
       
       if(face_locations is not None):
