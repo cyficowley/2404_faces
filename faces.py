@@ -47,7 +47,7 @@ class faces:
     frames_new_face = 0
 
     while True:
-
+      print("new frame")
       names_to_remove = []
       for name in self.seen_people.keys():
         self.seen_people[name] -= 1
