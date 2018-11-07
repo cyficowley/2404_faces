@@ -5,10 +5,13 @@ import operator
 import time
 import enchant
 from text2speech import Text2Speech
+from picamera.array import PiRGBArray
+from picamera import PiCamera, PiCameraValueError
 from audio import InterpretAudio
 # Get a reference to webcam #0 (the default one)
 
 wait_loops = 60
+
 
 
 class faces:
@@ -19,7 +22,7 @@ class faces:
     self.speech = Text2Speech()
 
     self.seen_people = {}
-
+    print("loading all faces")
     for root, dirs, files in os.walk("faces"):
       for person in dirs:
         for root, dirs, files in os.walk(os.path.join("faces", person)):
@@ -31,6 +34,7 @@ class faces:
                 self.people[person].append(encoding)
               else:
                 self.people[person] = [encoding]
+    print("finished loading all faces")
 
 
     self.known_encodings = []
@@ -42,11 +46,18 @@ class faces:
 
 
   def main_loop(self):
-    video_capture = cv2.VideoCapture(0)
+    print("initializing camera")
+    frames_new_face = 2
+    camera = PiCamera()
+    camera.resolution = (1280,720)
+    camera.framerate = 6 
+    rawCapture = PiRGBArray(camera, size=(1280,720))
+    
+    time.sleep(.1)
 
-    frames_new_face = 0
-
-    while True:
+    for image in camera.capture_continuous(rawCapture, format='bgr', use_video_port=True):
+      frame = image.array
+      rawCapture.truncate(0)
       print("new frame")
       names_to_remove = []
       for name in self.seen_people.keys():
@@ -57,8 +68,6 @@ class faces:
       for each in names_to_remove:
           del self.seen_people[name]      
     
-      ret, frame = video_capture.read()
-
       # Resize frame of video to 1/4 size for faster face recognition processing
 
       small_frame = cv2.resize(frame, (0, 0), fx=0.25, fy=0.25)
