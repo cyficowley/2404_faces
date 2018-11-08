@@ -8,6 +8,7 @@ from text2speech import Text2Speech
 from picamera.array import PiRGBArray
 from picamera import PiCamera, PiCameraValueError
 from audio import InterpretAudio
+import socket
 # Get a reference to webcam #0 (the default one)
 
 wait_loops = 0
@@ -49,9 +50,9 @@ class faces:
     print("initializing camera")
     frames_new_face = 0
     camera = PiCamera()
-    camera.resolution = (1280,720)
-    camera.framerate = 6 
-    rawCapture = PiRGBArray(camera, size=(1280,720))
+    camera.resolution = (320,192)
+    camera.framerate = 30 
+    rawCapture = PiRGBArray(camera, size=(320,192))
     
     time.sleep(.1)
 
@@ -69,9 +70,7 @@ class faces:
           del self.seen_people[name]      
     
       # Resize frame of video to 1/4 size for faster face recognition processing
-
-      small_frame = cv2.resize(frame, (0, 0), fx=0.25, fy=0.25)
-      cv2.imwrite("test.jpg", small_frame)
+      small_frame = frame
 
       # Convert the image from BGR color (which OpenCV uses) to RGB color (which face_recognition uses)
       rgb_small_frame = cv2.cvtColor(small_frame, cv2.COLOR_BGR2RGB)
@@ -129,6 +128,8 @@ class faces:
 
 
   def _return_name(self, text):
+    if(text is None):
+        return None
     words = text.split(" ")
     if(len(words) == 1):
       return words[0]
@@ -165,9 +166,23 @@ class faces:
       self.people[name].append(encoding)
     else:
       self.people[name] = [encoding]
-
+    
+  def _get_ip_address(self):
+    s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    s.connect(("8.8.8.8", 80))
+    addr = s.getsockname()[0]
+    s.close()
+    
+    #making the ip address easier to hear
+    sub_addr = addr.split(".")
+    vocal_addr = ""
+    for bit in sub_addr:
+        vocal_addr += bit + " point "
+    vocal_addr = vocal_addr[:-7]
+    self.speech.say("I P address is {}, again that is {}".format(vocal_addr, vocal_addr))
 
 
 if(__name__=="__main__"):
   face = faces()
+  face._get_ip_address()
   face.main_loop()
