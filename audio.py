@@ -12,7 +12,6 @@ class InterpretAudio:
       audio = self.r.listen(source)
       try:
         return self.r.recognize_google(audio)
-      except:
+      except Exception as e:
         print("failed to recognize speech")
         return None
-

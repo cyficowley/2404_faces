@@ -10,7 +10,7 @@ from picamera import PiCamera, PiCameraValueError
 from audio import InterpretAudio
 # Get a reference to webcam #0 (the default one)
 
-wait_loops = 60
+wait_loops = 0
 
 
 
@@ -47,7 +47,7 @@ class faces:
 
   def main_loop(self):
     print("initializing camera")
-    frames_new_face = 2
+    frames_new_face = 0
     camera = PiCamera()
     camera.resolution = (1280,720)
     camera.framerate = 6 
@@ -71,6 +71,7 @@ class faces:
       # Resize frame of video to 1/4 size for faster face recognition processing
 
       small_frame = cv2.resize(frame, (0, 0), fx=0.25, fy=0.25)
+      cv2.imwrite("test.jpg", small_frame)
 
       # Convert the image from BGR color (which OpenCV uses) to RGB color (which face_recognition uses)
       rgb_small_frame = cv2.cvtColor(small_frame, cv2.COLOR_BGR2RGB)
@@ -81,6 +82,8 @@ class faces:
       face_names = []
 
       all_matches = []
+      if(len(face_encodings) > 0):
+        print(len(face_encodings))
       for face_encoding in face_encodings:
         # See if the face is a match for the known face(s)
         matches = face_recognition.compare_faces(self.known_encodings, face_encoding)
@@ -90,15 +93,18 @@ class faces:
         for i in range(len(matches)):
           if(matches[i]):
             totals[self.names[i]] += 1
-
-        max_person = max(totals.items(), key=operator.itemgetter(1))
-        if(max_person[1] != 0):
+        
+        max_person = None
+        if(len(totals) != 0):
+          max_person = max(totals.items(), key=operator.itemgetter(1))
+        
+        if(max_person is not None and max_person[1] != 0):
           frames_new_face = 0
           all_matches.append(max_person[0])
         else:
           frames_new_face += 1
           # Has to see 3 frames of new person in a row to try to add them
-          if(frames_new_face == 3):
+          if(frames_new_face == 2):
             if(len(face_encodings) == 1):
               frames_new_face = 0
               self.speech.say("Please say your first name after the reeee")
@@ -106,7 +112,7 @@ class faces:
               self.speech.say("reeee")
               response = self.audio_input.listen_for_response()
               name = self._return_name(response)
-              if(len(name) != 0):
+              if(name is not None and len(name) != 0):
                 self._add_new_face(name, frame)
           
       
