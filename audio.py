@@ -3,7 +3,7 @@ import speech_recognition as sr
 class InterpretAudio:
   def __init__(self):
     self.r = sr.Recognizer()
-    self.mic = sr.Microphone()
+    self.mic = sr.Microphone(device_index=2)
     with self.mic as source:
       self.r.adjust_for_ambient_noise(source)
 
