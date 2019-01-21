@@ -9,9 +9,10 @@ from picamera.array import PiRGBArray
 from picamera import PiCamera, PiCameraValueError
 from audio import InterpretAudio
 import socket
+from gpio import needs_to_be_class 
 # Get a reference to webcam #0 (the default one)
 
-wait_loops = 0
+wait_loops = 100
 
 
 
@@ -21,6 +22,9 @@ class faces:
     self.dictionary = enchant.Dict("en_US")
     self.people = {}
     self.speech = Text2Speech()
+    
+    self.camera_on = False #tells the camera to actually process frames or not
+                           #its actually always on, not sure how bad that is
 
     self.seen_people = {}
     print("loading all faces")
@@ -36,6 +40,9 @@ class faces:
               else:
                 self.people[person] = [encoding]
     print("finished loading all faces")
+
+    #associating gpio functions with this classes fucntions
+    needs_to_be_class(self._turn_on_camera, self._turn_off_camera)
 
 
     self.known_encodings = []
@@ -57,9 +64,11 @@ class faces:
     time.sleep(.1)
 
     for image in camera.capture_continuous(rawCapture, format='bgr', use_video_port=True):
+
+
       frame = image.array
       rawCapture.truncate(0)
-      print("new frame")
+
       names_to_remove = []
       for name in self.seen_people.keys():
         self.seen_people[name] -= 1
@@ -68,6 +77,13 @@ class faces:
 
       for each in names_to_remove:
           del self.seen_people[name]      
+      
+      
+      if(not self.camera_on): #no motion detected so camera not needed
+        time.sleep(.1)
+        continue
+
+      print("new frame")
     
       # Resize frame of video to 1/4 size for faster face recognition processing
       small_frame = frame
@@ -108,23 +124,21 @@ class faces:
               frames_new_face = 0
               self.speech.say("Please say your first name after the reeee")
               self.audio_input = InterpretAudio()
-              self.speech.say("reeee")
+              self.speech.say("rrrrrrreeeeeeee")
               response = self.audio_input.listen_for_response()
               name = self._return_name(response)
               if(name is not None and len(name) != 0):
                 self._add_new_face(name, frame)
+                self.speech.say("nice to meet you {}".format(name))
           
       
       if(face_locations is not None):
         for each in all_matches:
           if(each not in self.seen_people):
-            self.speech.say("Good to see you {}".format(each))
+            self.speech.say("hey yo what up {}".format(each))
           self.seen_people[each] = wait_loops
 
 
-    # Release handle to the webcam
-    video_capture.release()
-    cv2.destroyAllWindows()
 
 
   def _return_name(self, text):
@@ -179,8 +193,14 @@ class faces:
     for bit in sub_addr:
         vocal_addr += bit + " point "
     vocal_addr = vocal_addr[:-7]
-    self.speech.say("I P address is {}, again that is {}".format(vocal_addr, vocal_addr))
+    #self.speech.say("I P address is {}, again that is {}".format(vocal_addr, vocal_addr))
 
+
+  def _turn_on_camera(self):
+    self.camera_on = True
+
+  def _turn_off_camera(self):
+    self.camera_on = False
 
 if(__name__=="__main__"):
   face = faces()
