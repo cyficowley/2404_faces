@@ -193,7 +193,7 @@ class faces:
     for bit in sub_addr:
         vocal_addr += bit + " point "
     vocal_addr = vocal_addr[:-7]
-    #self.speech.say("I P address is {}, again that is {}".format(vocal_addr, vocal_addr))
+    self.speech.say("I P address is {}, again that is {}".format(vocal_addr, vocal_addr))
 
 
   def _turn_on_camera(self):
