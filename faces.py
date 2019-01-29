@@ -9,10 +9,12 @@ from picamera.array import PiRGBArray
 from picamera import PiCamera, PiCameraValueError
 from audio import InterpretAudio
 import socket
+import numpy as np
 from gpio import needs_to_be_class 
+from sql import database
 # Get a reference to webcam #0 (the default one)
 
-wait_loops = 100
+wait_loops = 20
 
 
 
@@ -34,6 +36,7 @@ class faces:
           for image in files:
             if image.endswith(".jpg"):
               path = os.path.join("faces", person, image)
+              print(path)
               encoding = face_recognition.face_encodings(face_recognition.load_image_file(path))[0]
               if(person in self.people):
                 self.people[person].append(encoding)
@@ -83,8 +86,6 @@ class faces:
         time.sleep(.1)
         continue
 
-      print("new frame")
-    
       # Resize frame of video to 1/4 size for faster face recognition processing
       small_frame = frame
 
@@ -104,18 +105,28 @@ class faces:
         matches = face_recognition.compare_faces(self.known_encodings, face_encoding)
         
         totals = {name:0 for name in self.people.keys()}
-
+        
+        encodings_to_check = []
+        names_to_check = []
         for i in range(len(matches)):
           if(matches[i]):
+            encodings_to_check.append(self.known_encodings[i])
+            names_to_check.append(self.names[i])
             totals[self.names[i]] += 1
         
-        max_person = None
+        closest_person = None
+        min_distance = None
+        difference = -1
         if(len(totals) != 0):
-          max_person = max(totals.items(), key=operator.itemgetter(1))
+          distances = face_recognition.face_distance(encodings_to_check,face_encoding)
+          min_distance = min(distances)
+          closest_person = names_to_check[np.argmin(distances)]
+          if(len(distances) > 1):
+            difference = min([each - min_distance for each in distances if each - min_distance != 0])
         
-        if(max_person is not None and max_person[1] != 0):
+        if(closest_person is not None):
           frames_new_face = 0
-          all_matches.append(max_person[0])
+          all_matches.append((closest_person, min_distance, difference))
         else:
           frames_new_face += 1
           # Has to see 3 frames of new person in a row to try to add them
@@ -133,12 +144,14 @@ class faces:
           
       
       if(face_locations is not None):
+        db = database()
         for each in all_matches:
-          if(each not in self.seen_people):
-            self.speech.say("hey yo what up {}".format(each))
+          person, surity, difference = each
+          if(person not in self.seen_people):
+            self.speech.say("hey good to see you {}".format(person))
+            db.add_row(person, surity, difference)
           self.seen_people[each] = wait_loops
-
-
+        db.shutdown()
 
 
   def _return_name(self, text):
