@@ -79,7 +79,7 @@ class faces:
           names_to_remove.append(name)
 
       for each in names_to_remove:
-          del self.seen_people[name]      
+        del self.seen_people[each] 
       
       
       if(not self.camera_on): #no motion detected so camera not needed
@@ -104,7 +104,6 @@ class faces:
         # See if the face is a match for the known face(s)
         matches = face_recognition.compare_faces(self.known_encodings, face_encoding)
         
-        totals = {name:0 for name in self.people.keys()}
         
         encodings_to_check = []
         names_to_check = []
@@ -112,12 +111,11 @@ class faces:
           if(matches[i]):
             encodings_to_check.append(self.known_encodings[i])
             names_to_check.append(self.names[i])
-            totals[self.names[i]] += 1
         
         closest_person = None
         min_distance = None
         difference = -1
-        if(len(totals) != 0):
+        if(len(encodings_to_check) != 0):
           distances = face_recognition.face_distance(encodings_to_check,face_encoding)
           min_distance = min(distances)
           closest_person = names_to_check[np.argmin(distances)]
@@ -150,7 +148,7 @@ class faces:
           if(person not in self.seen_people):
             self.speech.say("hey good to see you {}".format(person))
             db.add_row(person, surity, difference)
-          self.seen_people[each] = wait_loops
+          self.seen_people[person] = wait_loops
         db.shutdown()
 
 
